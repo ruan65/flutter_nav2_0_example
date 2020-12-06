@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nav20/book_details_screen.dart';
+import 'package:nav20/transition.dart';
 import 'package:nav20/uknown_screen.dart';
 
 import 'book.dart';
@@ -44,9 +45,12 @@ class BookRouterDelegate extends RouterDelegate<BookRoutePath>
 
   BookRouterDelegate() : _navigatorKey = GlobalKey<NavigatorState>();
 
+  final _noAnimTransitionDelegate = NoAnimationTransitionDelegate();
+
   @override
   Widget build(BuildContext context) {
     return Navigator(
+      transitionDelegate: _noAnimTransitionDelegate,
       pages: [
         MaterialPage(
           key: ValueKey('BooksListPage'),
