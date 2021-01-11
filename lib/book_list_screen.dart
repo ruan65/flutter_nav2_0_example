@@ -4,7 +4,7 @@ import 'book.dart';
 
 class BooksListScreen extends StatelessWidget {
   final List<Book> books;
-  final ValueChanged<Book> onTapped;
+  final ValueChanged<int> onTapped;
 
   BooksListScreen({
     @required this.books,
@@ -16,14 +16,17 @@ class BooksListScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(),
       body: Column(
-        children: [
-          for (final book in books)
-            ListTile(
-              title: Text(book.title),
-              subtitle: Text(book.author),
-              onTap: () => onTapped(book),
-            )
-        ],
+        children: books
+            .asMap()
+            .map((index, book) => MapEntry(
+                index,
+                ListTile(
+                  title: Text(book.title),
+                  subtitle: Text(book.author),
+                  onTap: () => onTapped(index),
+                )))
+            .values
+            .toList(),
       ),
     );
   }

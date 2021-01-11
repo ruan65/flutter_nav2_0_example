@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_redux/flutter_redux.dart';
 import 'package:nav20/book_details_screen.dart';
+import 'package:nav20/redux/state.dart';
+import 'package:nav20/redux/store.dart';
 import 'package:nav20/transition.dart';
 import 'package:nav20/uknown_screen.dart';
 
 import 'book.dart';
 import 'book_list_screen.dart';
+import 'data/repository.dart';
 
-void main() {
+void main() async {
+  await Redux.init();
   runApp(BooksApp());
 }
 
@@ -22,9 +27,12 @@ class _BooksAppState extends State<BooksApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      routerDelegate: _routerDelegate,
-      routeInformationParser: _routeInformationParser,
+    return StoreProvider<AppState>(
+      store: Redux.store,
+      child: MaterialApp.router(
+        routerDelegate: _routerDelegate,
+        routeInformationParser: _routeInformationParser,
+      ),
     );
   }
 }
@@ -35,43 +43,40 @@ class BookRouterDelegate extends RouterDelegate<BookRoutePath>
   Book _selectedBook;
   bool show404 = false;
 
-  List<Book> books = [
-    Book('Stranger in a Strange Land', 'Robert A. Heinlein'),
-    Book('Foundation', 'Isaac Asimov'),
-    Book('Fahrenheit 451', 'Ray Bradbury'),
-    Book('Война и мир', 'Лев Толстой'),
-    Book('Воскресение', 'Лев Толстой'),
-  ];
-
   BookRouterDelegate() : _navigatorKey = GlobalKey<NavigatorState>();
 
   final _noAnimTransitionDelegate = NoAnimationTransitionDelegate();
 
   @override
   Widget build(BuildContext context) {
-    return Navigator(
-      transitionDelegate: _noAnimTransitionDelegate,
-      pages: [
-        MaterialPage(
-          key: ValueKey('BooksListPage'),
-          child: BooksListScreen(
-            books: books,
-            onTapped: _handleBookTapped,
-          ),
-        ),
-        if (show404)
-          MaterialPage(key: ValueKey('UnknownPage'), child: UnknownScreen())
-        else if (_selectedBook != null)
-          BookDetailsPage(book: _selectedBook)
-      ],
-      onPopPage: (route, result) {
-        if (!route.didPop(result)) {
-          return false;
-        }
-        _selectedBook = null;
-        show404 = false;
-        notifyListeners();
-        return true;
+    return StoreConnector<AppState, AppState>(
+      converter: (store) => store.state,
+      builder: (context, state) {
+        return Navigator(
+          transitionDelegate: _noAnimTransitionDelegate,
+          pages: [
+            MaterialPage(
+              key: ValueKey('BooksListPage'),
+              child: BooksListScreen(
+                books: books,
+                onTapped: _handleBookTapped,
+              ),
+            ),
+            if (show404)
+              MaterialPage(key: ValueKey('UnknownPage'), child: UnknownScreen())
+            else if (_selectedBook != null)
+              BookDetailsPage(book: _selectedBook)
+          ],
+          onPopPage: (route, result) {
+            if (!route.didPop(result)) {
+              return false;
+            }
+            _selectedBook = null;
+            show404 = false;
+            notifyListeners();
+            return true;
+          },
+        );
       },
     );
   }
@@ -109,8 +114,8 @@ class BookRouterDelegate extends RouterDelegate<BookRoutePath>
         : BookRoutePath.details(books.indexOf(_selectedBook));
   }
 
-  void _handleBookTapped(Book book) {
-    _selectedBook = book;
+  void _handleBookTapped(int index) {
+    _selectedBook = books[index];
     notifyListeners();
   }
 }
